@@ -1,6 +1,6 @@
 
 #define FFT_t int16_t
-#define output_t int32_t
+#define output_t float
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
 
   #pragma omp parallel for
   for (size_t count=0;count<NTEST;count++) {
-    size_t dataofs = count*FFTSIZE*NCHAN*2;
+  size_t dataofs = count*FFTSIZE*NCHAN*2;
     for (size_t chan1=0;chan1<NCHAN;chan1++) {
       FFT_t* cdata1 = &(data[dataofs+chan1*FFTSIZE*NCHAN*2]);
       for (size_t chan2=chan1;chan2<NCHAN; chan2++) {
@@ -36,14 +36,14 @@ int main(int argc, char **argv) {
 	output_t* outptr = &(output[(chan1*NCHAN+chan2)*FFTSIZE]);
 	for (size_t i=0;i<FFTSIZE;i++) {
 	  size_t j=2*i;
-	  outptr[i] = (cdata1[j]*cdata2[j]+cdata1[j+1]*cdata2[j+1]);
+	  outptr[i] += (cdata1[j]*cdata2[j]+cdata1[j+1]*cdata2[j+1]);
 	}
 	// IMAG PART
 	if (chan1!=chan2) {
 	  output_t* outptr = &(output[(chan2*NCHAN+chan1)*FFTSIZE]);
 	  for (size_t i=0;i<FFTSIZE;i++) {
 	    size_t j=2*i;
-	    outptr[i] = (cdata1[j]*cdata2[j+1]-cdata1[j+1]*cdata2[j]);
+	    outptr[i] += (cdata1[j]*cdata2[j+1]-cdata1[j+1]*cdata2[j]);
 	  }
 	}
       }
@@ -52,8 +52,10 @@ int main(int argc, char **argv) {
 
   int endTime = gettimeofday(&postLoop,NULL);
   printf("The end time of the main loop is  = %u.%06u s\n",postLoop.tv_sec,postLoop.tv_usec);
-  printf("The main loop took %ld us\n",(1000000*(postLoop.tv_sec-preLoop.tv_sec)+(postLoop.tv_usec-preLoop.tv_usec)));
-  printf("On average, a packet is processed roughly every %ld us\n\n",((1000000*(postLoop.tv_sec-preLoop.tv_sec)+(postLoop.tv_usec-preLoop.tv_usec))/NTEST));
+  int loopTime = (1000000*(postLoop.tv_sec-preLoop.tv_sec)+(postLoop.tv_usec-preLoop.tv_usec));
+  printf("The main loop took %ld us\n", loopTime);
+  float avgTime = (float) loopTime / (float) NTEST;
+  printf("On average, a packet is processed roughly every %f us\n\n", avgTime);
 
   startTime = gettimeofday(&preLoop, NULL);
   printf("The start time of the second loop is  = %u.%06u s\n",preLoop.tv_sec,preLoop.tv_usec);
