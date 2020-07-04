@@ -1,5 +1,5 @@
 
-#define FFT_t int8_t
+#define FFT_t uint8_t
 #define output_t float
 
 #include <stdint.h>
@@ -80,8 +80,7 @@ int main(int argc, char **argv) {
 	  size_t j=2*i;
 	  FFT_t PA = cdata1[j]*cdata2[j]; // Assuming data is stored as amplitude in j then phase in j+1
 	  FFT_t Pphi = cdata1[j+1]-cdata2[j+1];
-	  Pphi = pi; //Table references may require a specific value (not just malloc results) 
-	  outptr[i] += PA*referenceCos(Pphi, cosTable);
+	  outptr[i] += PA*cosTable[Pphi];
 	}
 	// IMAG PART
 	if (chan1!=chan2) {
@@ -90,8 +89,7 @@ int main(int argc, char **argv) {
 	    size_t j=2*i;
 	    FFT_t PA = cdata1[j]*cdata2[j]; // Assuming data is stored as amplitude in j then phase in j+1  
 	    FFT_t Pphi = cdata1[j+1]-cdata2[j+1];
-	    Pphi = pi; //Table references may require a specific value (not just malloc results)
-	    outptr[i] += PA*referenceSin(Pphi, sinTable);
+	    outptr[i] += PA*sinTable[Pphi];
 	  }
 	}
       }
